@@ -347,7 +347,18 @@ function addDemo(){
   DB.students=names.map((n,i)=>({name:n, sid:'0130'+(10+i), gender:'女', college:'（示例）'}));
   // 示例班：给体测五项+力量五项填一组前测/后测，便于直接看雷达与总评
   seedDemoMeasures();
-  save(); renderStudents(); toast('示例班已载入（含前后测数据）');
+  // 同时预填 技术评定 / 理论分 / 考勤，让总评表每一列都有数
+  DB.students.forEach((s,i)=>{
+    const k=sid_key(s.sid);
+    const t={}; TECH_ACTIONS.forEach((a,j)=>{ t[a] = ((i+j)%3===0)?3 : ((i+j)%3===1)?2 : 1; });
+    DB.tech[k]=t;
+    DB.theory[k]=Math.round(60+Math.random()*35); // 60-95
+    DB.attendance[k]={}; for(let l=1;l<=16;l++) DB.attendance[k][l]='出勤';
+  });
+  // 两个学生各加一次病假、一个迟到，演示考勤扣分
+  DB.attendance[sid_key(DB.students[3].sid)][8]='病假';
+  DB.attendance[sid_key(DB.students[9].sid)][5]='迟到';
+  save(); renderStudents(); toast('示例班已载入（含前后测+技术+理论+考勤）');
 }
 function seedDemoMeasures(){
   // 每个学生基于一个基准随机生成前后测（后测略好）
