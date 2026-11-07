@@ -318,6 +318,7 @@ function renderStudents(){
       <button class="btn primary" onclick="$('fileInput').click()">📥 导入 Excel</button>
       <button class="btn" onclick="addStudent()">＋ 手动添加</button>
       <button class="btn" onclick="addDemo()">ⓘ 载入示例班</button>
+      <button class="btn" onclick="exportBoard()">📦 导出学生看板</button>
     </div>
     <div class="mini" style="margin-top:8px">课程时间（可留空）：<input type="text" id="importGroup" placeholder="如 周三5-6" style="width:160px;display:inline-block" value="${esc(importGroup)}"></div>
   </div>
@@ -691,6 +692,22 @@ function exportAnalysis(){
 }
 
 /* ============ 备份 ============ */
+function exportBoard(){
+  const sts=DB.students||[];
+  if(!sts.length){ toast('先导入学生'); return; }
+  const students=sts.map(s=>{
+    const measures={};
+    METRICS.forEach(m=>{ measures[m.k]={ pre:getMeasure(m.k,s.sid,'pre'), post:getMeasure(m.k,s.sid,'post') }; });
+    return { sid:s.sid, name:s.name, measures };
+  });
+  const pkg={ type:'fitness-student-board', version:1, course:'体能训练（女生班）',
+    generated:new Date().toISOString().slice(0,10), students };
+  const blob=new Blob([JSON.stringify(pkg,null,1)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='体能训练-学生看板包-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); toast('看板包已导出（发到班级群，学生导入后输完整学号查看）');
+}
 function exportJSON(){ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='体能训练-备份-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); }
 function importJSON(e){ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=ev=>{ try{ DB=Object.assign(blankDB(),JSON.parse(ev.target.result)); save(); toast('已恢复'); renderStudents(); }catch(err){ toast('文件无效'); } }; rd.readAsText(f); e.target.value=''; }
 
