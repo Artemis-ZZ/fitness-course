@@ -307,6 +307,7 @@ function renderStudents(){
   const n=(DB.students||[]).length;
   $('headCount').textContent=n+' 人';
   let rows=(DB.students||[]).map((s,i)=>`<tr>
+    <td><input type="checkbox" class="selChk" value="${i}" onchange="updSelCount()"></td>
     <td>${i+1}</td><td>${esc(s.name)}</td><td>${esc(s.sid)}</td>
     <td>${esc(s.gender||'')}</td><td>${esc(s.college||'')}</td>
     <td><button class="btn sm" onclick="delStudent(${i})">删</button></td></tr>`).join('');
@@ -321,8 +322,12 @@ function renderStudents(){
     <div class="mini" style="margin-top:8px">课程时间（可留空）：<input type="text" id="importGroup" placeholder="如 周三5-6" style="width:160px;display:inline-block" value="${esc(importGroup)}"></div>
   </div>
   <div class="card">
-    <h3>共 ${n} 人</h3>
-    ${n?`<table><thead><tr><th>#</th><th>姓名</th><th>学号</th><th>性别</th><th>学院</th><th></th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="mini">尚未导入。点上方“导入 Excel”或“载入示例班”。</div>`}
+    <h3>共 ${n} 人 <span class="sub" style="margin-left:10px"><label><input type="checkbox" id="selAll" onchange="toggleAll(this)"> 全选</label></span></h3>
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn warn sm" onclick="delSelected()">🗑 批量删除所选</button>
+      <span class="mini" id="selCount">未选择</span>
+    </div>
+    ${n?`<table><thead><tr><th></th><th>#</th><th>姓名</th><th>学号</th><th>性别</th><th>学院</th><th></th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="mini">尚未导入。点上方“导入 Excel”或“载入示例班”。</div>`}
   </div>
   <div class="card">
     <h3>数据备份 <span class="sub">换设备 / 防丢失</span></h3>
@@ -335,6 +340,19 @@ function renderStudents(){
   </div>`;
 }
 function delStudent(i){ DB.students.splice(i,1); save(); renderStudents(); }
+function updSelCount(){
+  const chk=[...document.querySelectorAll('.selChk:checked')];
+  const c=$('selCount'); if(c) c.textContent = chk.length? ('已选 '+chk.length+' 人') : '未选择';
+}
+function toggleAll(b){ document.querySelectorAll('.selChk').forEach(c=>c.checked=b.checked); updSelCount(); }
+function delSelected(){
+  const chk=[...document.querySelectorAll('.selChk:checked')];
+  if(!chk.length){ toast('未勾选任何学生'); return; }
+  if(!confirm('确定删除选中的 '+chk.length+' 名学生？')) return;
+  const idx=chk.map(c=>+c.value).sort((a,b)=>b-a);
+  idx.forEach(i=>DB.students.splice(i,1));
+  save(); renderStudents(); toast('已删除 '+idx.length+' 人');
+}
 function addStudent(){
   const name=prompt('姓名'); if(!name) return;
   const sid=prompt('学号'); if(sid==null) return;
