@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0A6CF0">
+<title>体能训练课程系统 · 教师端</title>
+<style>
+:root{
+  --bg:#F2F3F7; --card:#FFFFFF; --fg:#1A1D24; --muted:#6B7280;
+  --accent:#0A6CF0; --accent-soft:#E8F1FF; --border:#E3E6EC;
+  --ok:#128C46; --warn:#D97706; --bad:#DC2626; --violet:#7C3AED;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;
+  font-size:16px;line-height:1.45;padding-bottom:70px}
+.header{position:sticky;top:0;z-index:20;background:var(--accent);color:#fff;padding:12px 14px;
+  display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.header h1{font-size:18px;margin:0;font-weight:600;flex:1}
+.header .count{font-size:13px;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:99px;white-space:nowrap}
+.nav{display:flex;overflow-x:auto;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.nav button{flex:1;min-width:70px;padding:12px 6px;font-size:15px;border:0;background:none;color:var(--muted);
+  border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;font-weight:500}
+.nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+main{padding:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font-size:16px}
+.card h3 .sub{font-size:13px;color:var(--muted);font-weight:400;margin-left:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border);
+  background:#fff;color:var(--fg);border-radius:10px;padding:11px 14px;font-size:16px;cursor:pointer;font-weight:600}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.ghost{background:none;border-color:transparent;color:var(--accent)}
+.btn.sm{padding:7px 11px;font-size:14px}
+.btn.big{width:100%;padding:14px;font-size:17px}
+.btn.warn{background:var(--warn);color:#fff;border-color:var(--warn)}
+.row{display:flex;align-items:center;gap:8px}
+.spacer{flex:1}
+label{font-size:14px;color:var(--muted)}
+input[type=text],input[type=number],select,textarea{font-size:16px;padding:10px 12px;border:1px solid var(--border);
+  border-radius:10px;width:100%;background:#fff;color:var(--fg)}
+input:focus,select:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:9px 7px;text-align:left;border-bottom:1px solid var(--border);vertical-align:middle}
+th{color:var(--muted);font-weight:600;font-size:13px;position:sticky;top:0;background:#fff}
+tr.tapped td{background:var(--accent-soft)}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600}
+.tag.ok{background:#E7F6EC;color:var(--ok)} .tag.warn{background:#FEF3E2;color:var(--warn)}
+.tag.bad{background:#FDECEC;color:var(--bad)} .tag.mut{background:#EEF0F4;color:var(--muted)}
+.numcell{font-variant-numeric:tabular-nums;text-align:right}
+.mini{font-size:13px;color:var(--muted)}
+.attn-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);
+  border-radius:10px;background:#fff;cursor:pointer;font-size:16px;margin-bottom:6px}
+.attn-btn.sel{border-color:var(--accent);background:var(--accent-soft)}
+.dots{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:7px 13px;border:1px solid var(--border);border-radius:99px;font-size:15px;cursor:pointer;background:#fff}
+.chip.sel{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.pill{padding:8px 12px;border-radius:10px;background:#F6F7F9;border:1px solid var(--border);cursor:pointer;font-size:15px;text-align:center}
+.pill.sel{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.hide{display:none!important}
+.grp-tabs{display:flex;gap:6px;margin-bottom:10px}
+svg{display:block}
+.legend{font-size:12px;color:var(--muted)}
+.bar{height:9px;border-radius:5px;background:#E9ECF2;overflow:hidden;flex:1}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:5px}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(20,24,32,.92);color:#fff;
+  padding:10px 18px;border-radius:10px;font-size:15px;z-index:99;max-width:86%;text-align:center}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>体能训练 · 教师端</h1>
+  <span class="count" id="headCount">0 人</span>
+</div>
+<div class="nav" id="nav">
+  <button data-t="students" class="on">学生</button>
+  <button data-t="measure">前测后测</button>
+  <button data-t="process">过程</button>
+  <button data-t="analyze">分析</button>
+  <button data-t="score">总评</button>
+</div>
+<main>
+  <section id="tab-students"></section>
+  <section id="tab-measure" class="hide"></section>
+  <section id="tab-process" class="hide"></section>
+  <section id="tab-analyze" class="hide"></section>
+  <section id="tab-score" class="hide"></section>
+</main>
+<div id="toast" class="toast hide"></div>
+<script src="./scoring-data.js"></script>
+<script>
+/* ============ 常量与指标定义 ============ */
+const STORE_KEY = 'fitness_course_v1';
+const SC = window.SCORING_DATA || {scores:{},pct:{},higher:{},change:{},weights:{}};
+
+// 指标：key, 名称, 单位, 方向(higher=越大越好), 类型, 组(体测/力量)
+const METRICS = [
+  {k:'m50',   name:'50米',     unit:'秒', higher:false, type:'sec1', grp:'体测', md:0.2,  fullAbs:0.6, p3Abs:0.4, line:0.2, fullRel:4.5, p3Rel:3.4},
+  {k:'jump',  name:'立定跳远', unit:'cm', higher:true,  type:'int',  grp:'体测', md:3,    fullAbs:9,   p3Abs:6,   line:3,   fullRel:4.6, p3Rel:3.45},
+  {k:'reach', name:'坐位体前屈',unit:'cm',higher:true,  type:'dec1', grp:'体测', md:1,    fullAbs:3,   p3Abs:2,   line:2,   fullRel:18.6,p3Rel:14.0},
+  {k:'m800',  name:'800米',     unit:'分′秒″', higher:false, type:'time800', grp:'体测', md:5, fullAbs:15, p3Abs:10, line:10,  fullRel:3.8, p3Rel:2.9},
+  {k:'situp', name:'仰卧起坐', unit:'个/分', higher:true, type:'int', grp:'体测', md:2,   fullAbs:6,   p3Abs:4,   line:3,   fullRel:18.9,p3Rel:14.2},
+  {k:'vjump', name:'原地纵跳', unit:'cm', higher:true,  type:'int',  grp:'力量', md:2},
+  {k:'squat', name:'深蹲60秒', unit:'次', higher:true,  type:'int',  grp:'力量', md:3},
+  {k:'push',  name:'跪姿俯卧撑',unit:'次', higher:true,  type:'int',  grp:'力量', md:2},
+  {k:'plank', name:'平板支撑', unit:'秒', higher:true,  type:'int',  grp:'力量', md:10},
+  {k:'calf',  name:'单脚提踵', unit:'次', higher:true,  type:'int',  grp:'力量', md:3},
+];
+const M = {}; METRICS.forEach(m=>M[m.k]=m);
+const BODY = METRICS.filter(m=>m.grp==='体测');   // 体测五项
+const POWER = METRICS.filter(m=>m.grp==='力量');  // 力量五项
+
+// 期末实践内部权重（国标口径）
+const BODY_WEIGHT = {m800:0.30, situp:0.30, jump:0.20, m50:0.10, reach:0.10};
+
+// 考勤符号
+const ATT = [
+  {v:'出勤', s:'✓', t:'ok'}, {v:'迟到', s:'⊖', t:'warn'}, {v:'早退', s:'⊘', t:'warn'},
+  {v:'病假', s:'◎', t:'mut'}, {v:'事假', s:'⊕', t:'mut'}, {v:'公假', s:'√', t:'mut'},
+  {v:'见习', s:'△', t:'mut'}, {v:'旷课', s:'○', t:'bad'},
+];
+const TECH_ACTIONS = ['深蹲','俯卧撑','平板','提踵','立定跳远'];
+
+/* ============ 数据库 ============ */
+let DB = load();
+function blankDB(){ return {ver:1, students:[], measures:{}, attendance:{}, tech:{}, theory:{}, note:''}; }
+function load(){
+  try{ const r=localStorage.getItem(STORE_KEY); return r?Object.assign(blankDB(),JSON.parse(r)):blankDB(); }
+  catch(e){ return blankDB(); }
+}
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }
+function sid_key(sid){ return String(sid).trim(); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.remove('hide');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.add('hide'),1800); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function $(id){ return document.getElementById(id); }
+
+/* ============ 时间(分.秒) 解析 ============ */
+// 输入 "4.30" -> 270秒；"4.3" -> 270；"4.03" -> 243；也接受纯秒 "270"
+function t800_in(v){
+  if(v==null||v==='') return null;
+  v=String(v).trim();
+  if(v.indexOf('.')<0 && v.indexOf('′')<0){ const n=parseFloat(v); return isFinite(n)?n:null; } // 纯秒
+  v=v.replace('′','.').replace('″','');
+  const parts=v.split('.');
+  const mm=parseInt(parts[0],10)||0;
+  let ss=0; if(parts.length>1){ const s=parts[1]; ss = s.length===1? parseInt(s,10)*10 : (parseInt(s,10)||0); }
+  return mm*60+ss;
+}
+function t800_out(sec){
+  if(sec==null) return '';
+  sec=Math.round(sec);
+  const mm=Math.floor(sec/60), ss=sec%60;
+  return mm+'′'+String(ss).padStart(2,'0')+'″';
+}
+function fmtVal(m, v){
+  if(v==null) return '';
+  if(m.type==='time800') return t800_out(v);
+  if(m.type==='sec1') return (Math.round(v*100)/100).toString();
+  if(m.type==='dec1') return (Math.round(v*10)/10).toString();
+  return Math.round(v).toString();
+}
+function parseVal(m, v){
+  if(v==null||v==='') return null;
+  if(m.type==='time800') return t800_in(v);
+  const n=parseFloat(v); return isFinite(n)?n:null;
+}
+
+/* ============ 全校百分位（超过全校 X%）============ */
+function beatPct(key, val){
+  const q=SC.pct && SC.pct[key];
+  if(!q||val==null) return null;
+  const hi=SC.higher[key];
+  // q: 升序分位数 0..100，值 = 第i百分位的原始值
+  let rank=0;
+  if(val<=q[0]) rank=0;
+  else if(val>=q[100]) rank=100;
+  else{
+    for(let i=0;i<100;i++){ if(val>=q[i]&&val<=q[i+1]){ rank=i+((val-q[i])/((q[i+1]-q[i])||1)); break; } }
+  }
+  return hi? rank : (100-rank);
+}
+/* ============ 国标单项分（就近查表）============ */
+function natScore(key, val){
+  const t=SC.scores && SC.scores[key];
+  if(!t||val==null) return null;
+  const keys=Object.keys(t);
+  if(!keys.length) return null;
+  let best=keys[0], bd=Math.abs(parseFloat(best)-val);
+  for(const k of keys){ const d=Math.abs(parseFloat(k)-val); if(d<bd){bd=d;best=k;} }
+  return t[best];
+}
+/* ============ 班内百分位（力量/体测均可）============ */
+function classPct(key, val){
+  const arr=[]; const m=M[key];
+  (DB.students||[]).forEach(s=>{ const v=getMeasure(key, s.sid, 'post'); if(v!=null) arr.push(v); });
+  if(!arr.length||val==null) return null;
+  const hi=m.higher;
+  let better=0;
+  for(const x of arr){ if(hi? x<=val : x>=val) better++; }
+  return Math.round(better/arr.length*100);
+}
+/* ============ 测量取值 ============ */
+function getMeasure(key, sid, which){ // which: pre|post
+  const o=DB.measures[key] && DB.measures[key][sid_key(sid)];
+  return o? (o[which]!=null?o[which]:null) : null;
+}
+function setMeasure(key, sid, which, val){
+  if(!DB.measures[key]) DB.measures[key]={};
+  const k=sid_key(sid);
+  if(!DB.measures[key][k]) DB.measures[key][k]={};
+  if(val==null) delete DB.measures[key][k][which]; else DB.measures[key][k][which]=val;
+}
+
+/* ============ 增值评分（双门槛，5项各4分）============ */
+function gainScore(sid){
+  let pts=0, used=0;
+  BODY.forEach(m=>{
+    const pre=getMeasure(m.k,sid,'pre'), post=getMeasure(m.k,sid,'post');
+    if(pre==null||post==null||pre===0) return; // 缺一端 → 该项不计入
+    used++;
+    const abs = m.higher ? (post-pre) : (pre-post);      // 绝对改善量(正=好)
+    const rel = m.higher ? (post-pre)/pre*100 : (pre-post)/pre*100; // 相对%
+    let s=0;
+    if(rel>=m.fullRel && abs>=m.fullAbs) s=4;
+    else if(rel>=m.p3Rel && abs>=m.p3Abs) s=3;
+    else if(abs>=m.line) s=2;
+    else if(abs>=m.md) s=1;
+    else s=0;
+    pts+=s;
+  });
+  // 缺一端：按剩余项重分配 → 满分仍20，按 used/5 比例放大
+  if(used>0 && used<5) pts = pts*(5/used);
+  return {raw:pts, cap: Math.round(pts*10)/10, used};
+}
+/* ============ 期末实践 35% ============ */
+function finalScore(sid){
+  let wsum=0, w=0;
+  for(const k in BODY_WEIGHT){
+    const m=M[k]; const v=getMeasure(k,sid,'post');
+    if(v==null) continue;
+    const sc=natScore(k,v);
+    if(sc==null) continue;
+    wsum+=sc*BODY_WEIGHT[k]; w+=BODY_WEIGHT[k];
+  }
+  if(w<=0) return null;
+  return {weighted: wsum, // 五项加权分(0-100)
+          course: wsum*0.35};
+}
+/* ============ 考勤 10% ============ */
+function attendanceScore(sid){
+  const att=DB.attendance[sid_key(sid)]||{};
+  let penalty=0, sick=0, nonpub=0;
+  for(const l in att){
+    const v=att[l];
+    if(v==='旷课'){ penalty+=5; nonpub++; }
+    else if(v==='事假'){ penalty+=2; nonpub++; }
+    else if(v==='病假'){ sick++; }
+    else if(v==='迟到'||v==='早退'){ penalty+=1; nonpub++; }
+    // 公假/见习/出勤 不扣
+  }
+  // 病假：1次免, 2次-1, 3次-3, 4次-5
+  if(sick>=2) penalty += [0,0,1,3,5][Math.min(sick,4)];
+  let score = Math.max(0, 10-penalty);
+  return {score, penalty, disqualified: nonpub>=5};
+}
+/* ============ 技术 15% ============ */
+function techScore(sid){
+  const t=DB.tech[sid_key(sid)]||{};
+  let s=0;
+  TECH_ACTIONS.forEach(a=>{ s += (t[a]||0); });
+  return s; // 满分15
+}
+/* ============ 总评 ============ */
+function totalRow(s){
+  const sid=s.sid;
+  const att=attendanceScore(sid);
+  const theory=DB.theory[sid_key(sid)]!=null?DB.theory[sid_key(sid)]:null;
+  const th = theory==null? null : theory*0.20;
+  const tech = techScore(sid);
+  const gain = gainScore(sid);
+  const fin = finalScore(sid);
+  const total = (att.score||0) + (th==null?0:th) + tech + (gain.cap||0) + (fin?fin.course:0);
+  return {att, theory, th, tech, gain, fin, total};
+}
+</script>
+<script>
+/* ============ 导航 ============ */
+let CUR='students';
+function showTab(t){
+  CUR=t;
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
+  ['students','measure','process','analyze','score'].forEach(x=>$('tab-'+x).classList.toggle('hide', x!==t));
+  if(t==='students') renderStudents();
+  if(t==='measure') renderMeasure();
+  if(t==='process') renderProcess();
+  if(t==='analyze') renderAnalyze();
+  if(t==='score') renderScore();
+}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+
+/* ============ 学生页 ============ */
+let importGroup='';
+function renderStudents(){
+  const el=$('tab-students');
+  const n=(DB.students||[]).length;
+  $('headCount').textContent=n+' 人';
+  let rows=(DB.students||[]).map((s,i)=>`<tr>
+    <td>${i+1}</td><td>${esc(s.name)}</td><td>${esc(s.sid)}</td>
+    <td>${esc(s.gender||'')}</td><td>${esc(s.college||'')}</td>
+    <td><button class="btn sm" onclick="delStudent(${i})">删</button></td></tr>`).join('');
+  el.innerHTML=`<div class="card">
+    <h3>学生名单 <span class="sub">支持 .xlsx 表头：姓名 / 学号 / 性别 / 学院</span></h3>
+    <div class="row" style="flex-wrap:wrap">
+      <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFile(event)">
+      <button class="btn primary" onclick="$('fileInput').click()">📥 导入 Excel</button>
+      <button class="btn" onclick="addStudent()">＋ 手动添加</button>
+      <button class="btn" onclick="addDemo()">ⓘ 载入示例班</button>
+    </div>
+    <div class="mini" style="margin-top:8px">课程时间（可留空）：<input type="text" id="importGroup" placeholder="如 周三5-6" style="width:160px;display:inline-block" value="${esc(importGroup)}"></div>
+  </div>
+  <div class="card">
+    <h3>共 ${n} 人</h3>
+    ${n?`<table><thead><tr><th>#</th><th>姓名</th><th>学号</th><th>性别</th><th>学院</th><th></th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="mini">尚未导入。点上方“导入 Excel”或“载入示例班”。</div>`}
+  </div>
+  <div class="card">
+    <h3>数据备份 <span class="sub">换设备 / 防丢失</span></h3>
+    <div class="row">
+      <button class="btn" onclick="exportJSON()">⬇ 导出备份</button>
+      <button class="btn" onclick="$('jsonInput').click()">⬆ 导入备份</button>
+    </div>
+    <input type="file" id="jsonInput" accept=".json" style="display:none" onchange="importJSON(event)">
+    <div class="mini" style="margin-top:8px">所有数据存在本机浏览器；导出 JSON 后可发到另一台设备导入。</div>
+  </div>`;
+}
+function delStudent(i){ DB.students.splice(i,1); save(); renderStudents(); }
+function addStudent(){
+  const name=prompt('姓名'); if(!name) return;
+  const sid=prompt('学号'); if(sid==null) return;
+  DB.students.push({name, sid, gender:'女', college:''});
+  save(); renderStudents();
+}
+function addDemo(){
+  const names=['陈思远','李佳','王雨萌','张欣然','刘思彤','赵一诺','孙悦','周雨桐','吴桐','郑好',
+    '林晓','何静','高诗涵','罗欣','许晴','邓岚','冯雨','曹雪','彭悦','袁梦'];
+  DB.students=names.map((n,i)=>({name:n, sid:'0130'+(10+i), gender:'女', college:'（示例）'}));
+  // 示例班：给体测五项+力量五项填一组前测/后测，便于直接看雷达与总评
+  seedDemoMeasures();
+  save(); renderStudents(); toast('示例班已载入（含前后测数据）');
+}
+function seedDemoMeasures(){
+  // 每个学生基于一个基准随机生成前后测（后测略好）
+  const base={m50:8.9,jump:168,reach:12.5,m800:260,situp:32,vjump:28,squat:34,push:9,plank:52,calf:22};
+  DB.students.forEach((s,i)=>{
+    const r=()=>0.8+Math.random()*0.4;
+    METRICS.forEach(m=>{
+      const b=base[m.k]; let pre, post;
+      if(m.k==='m50'||m.k==='m800'){ pre=b*(0.97+r()*0.07); post=pre*(1-(0.02+Math.random()*0.05)); }
+      else { pre=b*(0.9+r()*0.2); post=pre*(1+0.03+Math.random()*0.12); }
+      if(m.type==='int'){ pre=Math.round(pre); post=Math.round(post); }
+      else if(m.type==='sec1'){ pre=Math.round(pre*100)/100; post=Math.round(post*100)/100; }
+      else if(m.type==='dec1'){ pre=Math.round(pre*10)/10; post=Math.round(post*10)/10; }
+      else if(m.type==='time800'){ pre=Math.round(pre); post=Math.round(post); }
+      setMeasure(m.k,s.sid,'pre',pre); setMeasure(m.k,s.sid,'post',post);
+    });
+  });
+}
+function handleFile(e){
+  const f=e.target.files[0]; if(!f) return;
+  importGroup=($('importGroup')&&$('importGroup').value)||'';
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(!rows.length){ toast('空表'); return; }
+      // 表头识别
+      const hdr=rows[0].map(h=>String(h).trim());
+      const ci=n=>hdr.findIndex(h=>h.includes(n));
+      let iName=ci('姓名'), iSid=ci('学号'), iGen=ci('性别'), iCol=ci('学院')<0?ci('班级'):ci('学院');
+      if(iName<0||iSid<0){ toast('未识别到「姓名」「学号」列'); return; }
+      let added=0;
+      for(let r=1;r<rows.length;r++){
+        const row=rows[r]; if(!row||!row.length) continue;
+        const name=String(row[iName]||'').trim(), sid=String(row[iSid]||'').trim();
+        if(!name&&!sid) continue;
+        if(!name) continue;
+        DB.students.push({name, sid, gender:(iGen>=0?String(row[iGen]||'').trim():''), college:(iCol>=0?String(row[iCol]||'').trim():'')});
+        added++;
+      }
+      save(); renderStudents(); toast('导入 '+added+' 人');
+    }catch(err){ toast('导入失败：'+err.message); }
+  };
+  rd.readAsArrayBuffer(f);
+  e.target.value='';
+}
+
+/* ============ 前测后测录入 ============ */
+let curMetric='jump', curGroup=1;
+function renderMeasure(){
+  const el=$('tab-measure');
+  const m=M[curMetric];
+  const body=POWER.indexOf(m)>=0;
+  const chips=METRICS.map(x=>`<span class="chip ${x.k===curMetric?'sel':''}" onclick="selMetric('${x.k}')">${x.name}</span>`).join('');
+  // 分组
+  const sts=DB.students||[];
+  const gsize=5, groups=[];
+  for(let i=0;i<sts.length;i+=gsize) groups.push(sts.slice(i,i+gsize));
+  curGroup=Math.min(curGroup, Math.max(1,groups.length));
+  const grpTabs=groups.map((g,i)=>`<span class="pill ${(i+1)===curGroup?'sel':''}" onclick="selGroup(${i+1})">${i+1}组</span>`).join('');
+  const g=groups[curGroup-1]||[];
+  const rows=g.map(s=>{
+    const pre=getMeasure(m.k,s.sid,'pre'), post=getMeasure(m.k,s.sid,'post');
+    return `<tr><td style="white-space:nowrap">${esc(s.name)}</td>
+      <td><input type="text" inputmode="decimal" value="${esc(fmtVal(m,pre))}" onchange="onMeas('${esc(s.sid)}','pre',this.value)" placeholder="前测"></td>
+      <td><input type="text" inputmode="decimal" value="${esc(fmtVal(m,post))}" onchange="onMeas('${esc(s.sid)}','post',this.value)" placeholder="后测"></td>
+      <td class="numcell mini">${deltaStr(m,pre,post)}</td></tr>`;
+  }).join('');
+  el.innerHTML=`<div class="card">
+    <h3>前测 / 后测录入</h3>
+    <div class="dots" style="margin-bottom:10px">${chips}</div>
+    <div class="grp-tabs">${grpTabs}</div>
+    <div class="mini" style="margin-bottom:6px">${m.name} · 单位 ${m.unit} · ${m.higher?'越大越好':'越小越好'} · ${m.grp}${m.type==='time800'?'（输入如 4.30 = 4分30秒）':''}</div>
+    <table><thead><tr><th>姓名</th><th>前测</th><th>后测</th><th>变化</th></tr></thead><tbody>${rows||'<tr><td colspan=4 class="mini">无学生</td></tr>'}</tbody></table>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" onclick="nextMetric()">下一项 →</button>
+      <button class="btn" onclick="save();toast('已保存')">保存</button>
+    </div>
+  </div>`;
+}
+function selMetric(k){ curMetric=k; renderMeasure(); }
+function selGroup(i){ curGroup=i; renderMeasure(); }
+function nextMetric(){ const i=METRICS.findIndex(x=>x.k===curMetric); curMetric=METRICS[(i+1)%METRICS.length].k; renderMeasure(); }
+function onMeas(sid, which, val){
+  const m=M[curMetric]; const v=parseVal(m,val);
+  setMeasure(m.k,sid,which,v); save();
+  // 刷新变化列即可（不整屏重绘，避免失焦）
+  renderMeasure();
+}
+function deltaStr(m,pre,post){
+  if(pre==null||post==null) return '';
+  const d = m.higher? (post-pre) : (pre-post);
+  const dsc = m.type==='time800'? t800_out(Math.abs(Math.round(d))) : (m.type==='int'? Math.abs(Math.round(d)) : Math.abs(Math.round(d*10)/10));
+  const arrow = d>=m.md? (m.higher?'▲':'▼') : (d<=-m.md?(m.higher?'▼':'▲'):'–');
+  const color = d>=m.md? 'var(--ok)' : (d<=-m.md?'var(--bad)':'var(--muted)');
+  return `<span style="color:${color}">${arrow} ${dsc}</span>`;
+}
+
+/* ============ 过程（考勤/技术/理论）============ */
+let procTab='att', attLesson=5, techAction=0;
+function renderProcess(){
+  const el=$('tab-process');
+  const sub = `
+    <div class="dots" style="margin-bottom:10px">
+      <span class="chip ${procTab==='att'?'sel':''}" onclick="procTab='att';renderProcess()">考勤</span>
+      <span class="chip ${procTab==='tech'?'sel':''}" onclick="procTab='tech';renderProcess()">技术评定</span>
+      <span class="chip ${procTab==='theory'?'sel':''}" onclick="procTab='theory';renderProcess()">理论分</span>
+    </div>`;
+  if(procTab==='att') el.innerHTML=sub+renderAtt();
+  else if(procTab==='tech') el.innerHTML=sub+renderTech();
+  else el.innerHTML=sub+renderTheory();
+}
+function renderAtt(){
+  const lessons=[];
+  for(let i=1;i<=16;i++) lessons.push(`<option value="${i}" ${i===attLesson?'selected':''}>第${i}讲</option>`);
+  const sts=DB.students||[];
+  const rows=sts.map(s=>{
+    const cur=DB.attendance[sid_key(s.sid)]&&DB.attendance[sid_key(s.sid)][attLesson]||'出勤';
+    const btns=ATT.map(a=>`<span class="chip ${cur===a.v?'sel':''}" onclick="setAtt('${esc(s.sid)}','${a.v}')">${a.s} ${a.v}</span>`).join('');
+    return `<div class="attn-btn"><div><div>${esc(s.name)}</div><div class="mini">${esc(s.sid)}</div></div><div class="dots" style="max-width:280px">${btns}</div></div>`;
+  }).join('');
+  return `<div class="card"><h3>考勤 <span class="sub">默认出勤，只点异常</span></h3>
+    <div class="row"><label>讲次</label><select onchange="attLesson=+this.value;renderProcess()">${lessons.join('')}</select>
+    <button class="btn sm" onclick="setAllAtt('出勤')">全出勤</button></div>
+    <div style="margin-top:10px">${rows||'<div class="mini">无学生</div>'}</div>
+    <div class="mini" style="margin-top:8px">○旷-5 · ⊕事-2 · ◎病(2起扣) · ⊖迟到/⊘早退-1 · √公/△见习免 · ≥5次非公假缺勤=取消资格</div>
+  </div>`;
+}
+function setAtt(sid,v){ if(!DB.attendance[sid_key(sid)]) DB.attendance[sid_key(sid)]={}; DB.attendance[sid_key(sid)][attLesson]=v; save(); renderProcess(); }
+function setAllAtt(v){ (DB.students||[]).forEach(s=>{ if(!DB.attendance[sid_key(s.sid)]) DB.attendance[sid_key(s.sid)]={}; DB.attendance[sid_key(s.sid)][attLesson]=v; }); save(); renderProcess(); }
+
+function renderTech(){
+  const a=TECH_ACTIONS[techAction];
+  const sts=DB.students||[];
+  const rows=sts.map(s=>{
+    const cur=DB.tech[sid_key(s.sid)]&&DB.tech[sid_key(s.sid)][a]||0;
+    const btns=[3,2,1].map(v=>`<span class="chip ${cur===v?'sel':''}" onclick="setTech('${esc(s.sid)}','${a}',${v})">${v}分</span>`).join('');
+    const lbl=cur? (cur===3?'达标':cur===2?'基本':'未达') : '未评';
+    return `<div class="attn-btn"><div><div>${esc(s.name)}</div><div class="mini">${lbl}</div></div><div class="dots">${btns}</div></div>`;
+  }).join('');
+  const actTabs=TECH_ACTIONS.map((x,i)=>`<span class="pill ${i===techAction?'sel':''}" onclick="techAction=${i};renderProcess()">${x}</span>`).join('');
+  return `<div class="card"><h3>技术评定（3分×5=15）</h3>
+    <div class="grp-tabs">${actTabs}</div>
+    <div class="mini" style="margin-bottom:8px">一个动作一屏评全班：达标3 / 基本2 / 未达1，关键错误降一档（纵跳不评）</div>
+    ${rows||'<div class="mini">无学生</div>'}</div>`;
+}
+function setTech(sid,a,v){ if(!DB.tech[sid_key(sid)]) DB.tech[sid_key(sid)]={}; DB.tech[sid_key(sid)][a]=v; save(); renderProcess(); }
+
+function renderTheory(){
+  const sts=DB.students||[];
+  const rows=sts.map(s=>{
+    const v=DB.theory[sid_key(s.sid)];
+    return `<tr><td>${esc(s.name)}</td><td><input type="text" inputmode="decimal" value="${v==null?'':v}" onchange="setTheory('${esc(s.sid)}',this.value)" placeholder="0-100"></td></tr>`;
+  }).join('');
+  return `<div class="card"><h3>期末理论分（0–100，含处方简答题）</h3>
+    <table><thead><tr><th>姓名</th><th>卷面分</th></tr></thead><tbody>${rows||'<tr><td colspan=2 class="mini">无学生</td></tr>'}</tbody></table>
+    <div class="mini" style="margin-top:8px">理论 20% = 卷面分 × 0.20</div></div>`;
+}
+function setTheory(sid,v){ const n=parseFloat(v); DB.theory[sid_key(sid)]=isFinite(n)?n:null; save(); renderProcess(); }
+</script>
+<script>
+/* ============ 分析 ============ */
+let curStudent='';
+function renderAnalyze(){
+  const el=$('tab-analyze');
+  const sts=DB.students||[];
+  if(!curStudent && sts.length) curStudent=sts[0].sid;
+  const opts=sts.map(s=>`<option value="${esc(s.sid)}" ${s.sid===curStudent?'selected':''}>${esc(s.name)} ${esc(s.sid)}</option>`).join('');
+  if(!sts.length){ el.innerHTML='<div class="card"><div class="mini">先导入学生。</div></div>'; return; }
+  const s=sts.find(x=>x.sid===curStudent)||sts[0];
+  el.innerHTML=`<div class="card">
+    <h3>个人分析</h3>
+    <select onchange="curStudent=this.value;renderAnalyze()">${opts}</select>
+  </div>
+  ${radarCard(s)}
+  ${strengthCard(s)}
+  ${changeCard(s)}`;
+}
+function radarSVG(labels, preV, postV, maxVal){
+  const cx=130, cy=130, R=100, n=labels.length;
+  const ang=i=> -Math.PI/2 + i*2*Math.PI/n;
+  const pt=(i,r)=>[cx+r*Math.cos(ang(i)), cy+r*Math.sin(ang(i))].map(x=>Math.round(x*10)/10);
+  let grid='', axes='';
+  for(let ring=1;ring<=5;ring++){ const r=R*ring/5; const pts=labels.map((_,i)=>pt(i,r).join(',')).join(' '); grid+=`<polygon points="${pts}" fill="none" stroke="#E3E6EC" stroke-width="1"/>`; }
+  for(let i=0;i<n;i++){ const p=pt(i,R); axes+=`<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#E3E6EC" stroke-width="1"/>`; }
+  const poly=(vals,col,fill)=>{ const pts=vals.map((v,i)=>pt(i,R*Math.max(0,Math.min(maxVal,v))/maxVal).join(',')).join(' '); return `<polygon points="${pts}" fill="${fill}" stroke="${col}" stroke-width="2"/>`; };
+  let lbls='';
+  for(let i=0;i<n;i++){ const p=pt(i,R+16); const lab=labels[i]; const lx=p[0]-((i===2)?14:0); lbls+=`<text x="${p[0]}" y="${p[1]}" font-size="12" fill="#6B7280" text-anchor="middle">${lab}</text>`; }
+  const pre=poly(preV,'#0A6CF0','rgba(10,108,240,.16)');
+  const post=poly(postV,'#DC2626','rgba(220,38,38,.16)');
+  return `<svg viewBox="0 0 260 270" style="width:100%;max-width:360px">${grid}${axes}${pre}${post}${lbls}</svg>`;
+}
+function radarCard(s){
+  // 体测五项：全校百分位
+  const bPre=BODY.map(m=>beatPct(m.k,getMeasure(m.k,s.sid,'pre')));
+  const bPost=BODY.map(m=>beatPct(m.k,getMeasure(m.k,s.sid,'post')));
+  const pPre=POWER.map(m=>classPct(m.k,getMeasure(m.k,s.sid,'pre')));
+  const pPost=POWER.map(m=>classPct(m.k,getMeasure(m.k,s.sid,'post')));
+  const hasBody=bPre.some(v=>v!=null);
+  const hasPower=pPre.some(v=>v!=null);
+  const safe=arr=>arr.map(v=>v==null?0:v);
+  return `<div class="card"><h3>${esc(s.name)} · 双雷达图</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center">
+      <div style="text-align:center"><div class="legend">体测五项（全校百分位）</div>${hasBody?radarSVG(BODY.map(m=>m.name),safe(bPre),safe(bPost),100):'<div class="mini">未录</div>'}</div>
+      <div style="text-align:center"><div class="legend">力量五项（班内百分位）</div>${hasPower?radarSVG(POWER.map(m=>m.name),safe(pPre),safe(pPost),100):'<div class="mini">未录</div>'}</div>
+    </div>
+    <div class="legend" style="text-align:center">— 蓝=前测 · 红=后测</div>
+  </div>`;
+}
+function strengthCard(s){
+  // 强弱项：按前测全校百分位排序
+  const items=BODY.map(m=>({m, pre:getMeasure(m.k,s.sid,'pre'), pct:beatPct(m.k,getMeasure(m.k,s.sid,'pre'))})).filter(x=>x.pct!=null);
+  items.sort((a,b)=>a.pct-b.pct);
+  if(!items.length) return '';
+  const weak=items.slice(0,2).map(x=>x.m.name+' P'+Math.round(x.pct)).join('、');
+  const strong=items.slice(-2).reverse().map(x=>x.m.name+' P'+Math.round(x.pct)).join('、');
+  const bars=items.map(x=>`<div class="row" style="margin:4px 0"><div style="width:76px;font-size:14px">${x.m.name}</div><div class="bar"><i style="width:${Math.round(x.pct)}%"></i></div><div style="width:48px;text-align:right;font-size:13px;color:var(--muted)">P${Math.round(x.pct)}</div></div>`).join('');
+  return `<div class="card"><h3>强弱项（前测·全校百分位）</h3>${bars}
+    <div class="mini" style="margin-top:8px">最弱：${weak}<br>最强：${strong}<br><span style="color:var(--muted)">只判“哪里弱”，不给你该怎么练。</span></div></div>`;
+}
+function changeCard(s){
+  const mk=m=>{ const pre=getMeasure(m.k,s.sid,'pre'), post=getMeasure(m.k,s.sid,'post');
+    if(pre==null&&post==null) return null;
+    const d= (pre!=null&&post!=null)? (m.higher?post-pre:pre-post) : null;
+    const rel= (pre!=null&&post!=null&&pre!==0)? (m.higher?(post-pre)/pre*100:(pre-post)/pre*100) : null;
+    const sig = d==null? '' : (d>=m.md? '显著▲' : (d<=-m.md?'退步▼':'持平'));
+    const col = d==null?'':(d>=m.md?'var(--ok)':(d<=-m.md?'var(--bad)':'var(--muted)'));
+    return `<tr><td>${m.name}</td><td class="numcell">${fmtVal(m,pre)||'—'}</td><td class="numcell">${fmtVal(m,post)||'—'}</td>
+      <td class="numcell">${rel==null?'—':(rel>0?'+':'')+Math.round(rel*10)/10+'%'}</td><td style="color:${col}">${sig}</td></tr>`;
+  };
+  const bodyRows=BODY.map(mk).filter(Boolean).join('');
+  const powRows=POWER.map(mk).filter(Boolean).join('');
+  return `<div class="card"><h3>前后测明细</h3>
+    <div class="mini" style="margin-bottom:4px">体测五项</div>
+    <table><thead><tr><th>项目</th><th>前测</th><th>后测</th><th>变化</th><th>判定</th></tr></thead><tbody>${bodyRows}</tbody></table>
+    <div class="mini" style="margin:10px 0 4px">力量五项（阈值：纵跳2cm/深蹲3次/俯卧撑2次/平板10秒/提踵3次）</div>
+    <table><thead><tr><th>项目</th><th>前测</th><th>后测</th><th>变化</th><th>判定</th></tr></thead><tbody>${powRows}</tbody></table>
+  </div>`;
+}
+
+/* ============ 总评 ============ */
+function renderScore(){
+  const el=$('tab-score');
+  const sts=DB.students||[];
+  if(!sts.length){ el.innerHTML='<div class="card"><div class="mini">先导入学生。</div></div>'; return; }
+  const rows=sts.map(s=>{
+    const r=totalRow(s);
+    const lvl = r.att.disqualified?'取消资格':(r.total>=90?'优秀':r.total>=80?'良好':r.total>=70?'中等':r.total>=60?'及格':'不及格');
+    const lvlT = r.att.disqualified?'bad':(r.total>=80?'ok':(r.total>=60?'warn':'bad'));
+    return `<tr>
+      <td>${esc(s.name)}</td>
+      <td class="numcell">${r.att.score.toFixed(1)}</td>
+      <td class="numcell">${r.th==null?'—':r.th.toFixed(1)}</td>
+      <td class="numcell">${r.tech}</td>
+      <td class="numcell">${r.gain.used?r.gain.cap.toFixed(1):'—'}</td>
+      <td class="numcell">${r.fin?r.fin.course.toFixed(1):'—'}</td>
+      <td class="numcell" style="font-weight:700">${r.att.disqualified?'—':r.total.toFixed(1)}</td>
+      <td><span class="tag ${lvlT}">${lvl}</span></td></tr>`;
+  }).join('');
+  el.innerHTML=`<div class="card">
+    <h3>总评 <span class="sub">考勤10 + 理论20 + 技术15 + 增值20 + 期末35</span></h3>
+    <table><thead><tr><th>姓名</th><th>考勤</th><th>理论</th><th>技术</th><th>增值</th><th>期末</th><th>总评</th><th>等级</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" onclick="exportBook()">📥 导出成绩册</button>
+      <button class="btn" onclick="exportAnalysis()">📊 导出班级分析</button>
+    </div>
+    <div class="mini" style="margin-top:8px">增值缺前/后测任一端 → 该指标不计入并按剩余项重分配；技术栏为 5 动作得分和（满分15）。</div>
+  </div>`;
+}
+
+/* ============ 导出 ============ */
+function exportBook(){
+  const sts=DB.students||[];
+  const aoa=[['序号','学号','姓名','性别','学院','考勤(10)','理论(20)','技术(15)','增值(20)','期末(35)','总评','等级']];
+  sts.forEach((s,i)=>{
+    const r=totalRow(s);
+    const lvl=r.att.disqualified?'取消资格':(r.total>=90?'优秀':r.total>=80?'良好':r.total>=70?'中等':r.total>=60?'及格':'不及格');
+    aoa.push([i+1, s.sid, s.name, s.gender||'', s.college||'', r.att.score.toFixed(1), r.th==null?'':r.th.toFixed(1), r.tech, r.gain.used?r.gain.cap.toFixed(1):'', r.fin?r.fin.course.toFixed(1):'', r.att.disqualified?'':r.total.toFixed(1), lvl]);
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), '总评');
+  // 明细 sheet
+  const det=[['学号','姓名','类别','项目','前测','后测','变化%','判定']];
+  sts.forEach(s=>{ METRICS.forEach(m=>{
+    const pre=getMeasure(m.k,s.sid,'pre'), post=getMeasure(m.k,s.sid,'post');
+    if(pre==null&&post==null) return;
+    const d=(pre!=null&&post!=null)?(m.higher?post-pre:pre-post):null;
+    const rel=(pre!=null&&post!=null&&pre!==0)?(m.higher?(post-pre)/pre*100:(pre-post)/pre*100):null;
+    const sig=d==null?'':(d>=m.md?'显著':(d<=-m.md?'退步':'持平'));
+    det.push([s.sid,s.name,m.grp,m.name,fmtVal(m,pre),fmtVal(m,post),rel==null?'':(Math.round(rel*10)/10),sig]);
+  });});
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(det), '前后测明细');
+  XLSX.writeFile(wb, '体能训练成绩册.xlsx');
+}
+function exportAnalysis(){
+  const sts=DB.students||[];
+  const aoa=[['学号','姓名']];
+  BODY.forEach(m=>aoa[0].push(m.name+'前',m.name+'后',m.name+'全校%'));
+  POWER.forEach(m=>aoa[0].push(m.name+'前',m.name+'后',m.name+'班内%'));
+  sts.forEach(s=>{
+    const row=[s.sid,s.name];
+    BODY.forEach(m=>{ row.push(fmtVal(m,getMeasure(m.k,s.sid,'pre')),fmtVal(m,getMeasure(m.k,s.sid,'post')), beatPct(m.k,getMeasure(m.k,s.sid,'post'))==null?'':Math.round(beatPct(m.k,getMeasure(m.k,s.sid,'post')))); });
+    POWER.forEach(m=>{ row.push(fmtVal(m,getMeasure(m.k,s.sid,'pre')),fmtVal(m,getMeasure(m.k,s.sid,'post')), classPct(m.k,getMeasure(m.k,s.sid,'post'))==null?'':classPct(m.k,getMeasure(m.k,s.sid,'post'))); });
+    aoa.push(row);
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), '班级分析');
+  XLSX.writeFile(wb, '体能训练班级分析.xlsx');
+}
+
+/* ============ 备份 ============ */
+function exportJSON(){ const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='体能训练-备份-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); }
+function importJSON(e){ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=ev=>{ try{ DB=Object.assign(blankDB(),JSON.parse(ev.target.result)); save(); toast('已恢复'); renderStudents(); }catch(err){ toast('文件无效'); } }; rd.readAsText(f); e.target.value=''; }
+
+/* ============ 启动 ============ */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
+showTab('students');
+</script>
+</body>
+</html>

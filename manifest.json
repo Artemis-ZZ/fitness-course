@@ -1,0 +1,9 @@
+{
+  "name": "体能训练课程系统",
+  "short_name": "体能训练",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F2F3F7",
+  "theme_color": "#0A6CF0",
+  "icons": []
+}
